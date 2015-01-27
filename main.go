@@ -14,38 +14,37 @@ import (
 
 var pattern = regexp.MustCompile(`^(MemFree|Buffers|Cached): + (\d+) kB`)
 
-func gradient(lo, hi, memory uint) func(val uint) string {
+func gradient(shades uint, max_value uint) func(val uint) string {
 	var (
-		mid         float32 = (float32(hi - lo)) / 2
-		scale       float32 = 255 / (mid - float32(lo))
-		step                = memory / (hi - lo + 1)
-		colors              = make([]string, hi-lo+1)
-		breakpoints         = make([]uint, hi-lo)
+		colors              = make([]string, shades)
+		breakpoints         = make([]uint, shades-1)
+		step                = max_value / shades
+		scale       float32 = 255 / (float32(max_value) / 2)
 	)
 
 	color := func(val uint) string {
 		switch {
-		case val <= lo:
+		case val < step:
 			// red
 			return "#FF0000"
-		case val >= hi:
+		case val >= step*(shades-1):
 			// green
 			return "#00FF00"
-		case float32(val) < mid:
+		case val < max_value/2:
 			// red-ish
-			return fmt.Sprintf("#FF%02X00", uint(float32(val-lo)*scale))
+			return fmt.Sprintf("#FF%02X00", uint(float32(val)*scale))
 		default:
 			// green-ish
-			return fmt.Sprintf("#%02XFF00", uint(255-(float32(val)-mid)*scale))
+			return fmt.Sprintf("#%02XFF00", uint(255-(float32(val)-float32(max_value/2-step))*scale))
 		}
 	}
 
-	for i, k := step, 0; i < memory; i, k = i+step, k+1 {
-		breakpoints[k] = i
+	for i := uint(0); i < shades-1; i++ {
+		breakpoints[i] = step * (i + 1)
 	}
 
-	for i, k := lo, 0; i <= hi; i, k = i+1, k+1 {
-		colors[k] = color(i)
+	for i := uint(0); i < shades; i++ {
+		colors[i] = color(step * i)
 	}
 
 	out := func(val uint) string {
@@ -111,7 +110,7 @@ func main() {
 	var (
 		buffer   bytes.Buffer
 		status   []Element
-		colorize = gradient(0, 3, 1024)
+		colorize = gradient(4, 1024)
 	)
 
 	// Skip the first line which contains the version header.
