@@ -66,30 +66,37 @@ func gradient(shades uint, max_value uint) func(val uint) string {
 	return out
 }
 
-func getFreeMemory() uint {
-	var freeMemory uint = 0
-
+func getFreeMemory() (freeMemory uint) {
 	file, err := os.Open("/proc/meminfo")
+
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
+
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
 		line := scanner.Text()
+
 		if pattern.MatchString(line) {
 			memory := (pattern.FindAllStringSubmatch(line, -1)[0][2])
 			tmp, err := strconv.ParseUint(memory, 10, 32)
+
 			if err != nil {
 				log.Fatal(err)
+				continue
 			}
+
 			freeMemory += uint(tmp)
 		}
 	}
 
 	// Return free memory in MB.
-	return freeMemory / 1024
+	freeMemory /= 1024
+	return
 }
 
 func main() {
@@ -106,17 +113,19 @@ func main() {
 		SeparatorBlockWidth string `json:"separator_block_width,omitempty"`
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
 	var (
 		buffer   bytes.Buffer
 		status   []Element
 		colorize = gradient(4, 1024)
 	)
 
+	scanner := bufio.NewScanner(os.Stdin)
+
 	// Skip the first line which contains the version header.
 	if scanner.Scan() {
 		if _, err := buffer.WriteString(scanner.Text()); err != nil {
 			log.Fatal(err)
+			panic("failed to write version header")
 		}
 	}
 
@@ -124,11 +133,13 @@ func main() {
 	if scanner.Scan() {
 		if _, err := buffer.WriteString(scanner.Text()); err != nil {
 			log.Fatal(err)
+			panic("failed to write start of array")
 		}
 	}
 
 	for scanner.Scan() {
 		line, prefix := scanner.Text(), ""
+
 		// Remember the comma at the beginning of the line.
 		if strings.HasPrefix(line, ",") {
 			line, prefix = line[1:], ","
@@ -136,6 +147,7 @@ func main() {
 
 		if _, err := buffer.WriteString(prefix); err != nil {
 			log.Fatal(err)
+			continue
 		}
 
 		freeMemory := getFreeMemory()
@@ -147,16 +159,20 @@ func main() {
 		}
 
 		dec := json.NewDecoder(strings.NewReader(line))
+
 		if err := dec.Decode(&status); err != nil {
 			log.Fatal(err)
+			continue
 		}
 
 		// Prepend the memory element.
 		status = append([]Element{memoryElement}, status...)
 
 		out, err := json.Marshal(status)
+
 		if err != nil {
 			log.Fatal(err)
+			continue
 		}
 
 		buffer.Write(out)
