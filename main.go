@@ -60,7 +60,8 @@ func gradient(shades uint, max_value uint) func(val uint) string {
 			}
 		}
 
-		panic("gradient")
+		log.Println("failed to determine color")
+		return ""
 	}
 
 	return out
