@@ -71,7 +71,6 @@ func getFreeMemory() (freeMemory uint) {
 
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	defer file.Close()
@@ -86,7 +85,7 @@ func getFreeMemory() (freeMemory uint) {
 			tmp, err := strconv.ParseUint(memory, 10, 32)
 
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				continue
 			}
 
@@ -125,7 +124,6 @@ func main() {
 	if scanner.Scan() {
 		if _, err := buffer.WriteString(scanner.Text()); err != nil {
 			log.Fatal(err)
-			panic("failed to write version header")
 		}
 	}
 
@@ -133,7 +131,6 @@ func main() {
 	if scanner.Scan() {
 		if _, err := buffer.WriteString(scanner.Text()); err != nil {
 			log.Fatal(err)
-			panic("failed to write start of array")
 		}
 	}
 
@@ -146,7 +143,7 @@ func main() {
 		}
 
 		if _, err := buffer.WriteString(prefix); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
@@ -161,7 +158,7 @@ func main() {
 		dec := json.NewDecoder(strings.NewReader(line))
 
 		if err := dec.Decode(&status); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
@@ -171,7 +168,7 @@ func main() {
 		out, err := json.Marshal(status)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
