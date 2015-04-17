@@ -70,7 +70,9 @@ func getFreeMemory() (freeMemory uint) {
 	file, err := os.Open("/proc/meminfo")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		freeMemory = 0
+		return
 	}
 
 	defer file.Close()
