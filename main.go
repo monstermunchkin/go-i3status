@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var pattern = regexp.MustCompile(`^(MemFree|Buffers|Cached): + (\d+) kB`)
+var pattern = regexp.MustCompile(`^MemAvailable: +(\d+) kB`)
 
 func gradient(shades uint, max_value uint) func(val uint) string {
 	var (
@@ -84,7 +84,7 @@ func getFreeMemory() (freeMemory uint) {
 		line := scanner.Text()
 
 		if pattern.MatchString(line) {
-			memory := (pattern.FindAllStringSubmatch(line, -1)[0][2])
+			memory := (pattern.FindAllStringSubmatch(line, -1)[0][1])
 			tmp, err := strconv.ParseUint(memory, 10, 32)
 
 			if err != nil {
@@ -92,7 +92,8 @@ func getFreeMemory() (freeMemory uint) {
 				continue
 			}
 
-			freeMemory += uint(tmp)
+			freeMemory = uint(tmp)
+			break
 		}
 	}
 
